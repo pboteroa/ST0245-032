@@ -1,54 +1,57 @@
-package taller10;
-
 public class BinarySearchTree {
 
-    private Node root;
- 
+    Node root; 
   
-   public BinarySearchTree() {
-       this.root = null;
-   }
-
-   public BinarySearchTree(int n) {
-       this.root = new Node(n);
-   }
-
-   public void insertar(int n) {
-       insertarAux(root, n);
-   }
-
-   private void insertarAux(Node node, int n) {
-       if (node.data == n){
-           return;
-       }else if (n > node.data) {
-           if (node.right == null) {
-               node.right = new Node(n);
-           }else {
-               insertarAux(node.left , n);
-           }
-       }else {
-           if (node.left == null) {
-               node.left = new Node(n);
-           }else {
-               insertarAux(node.right, n);
-           }
-       }
-   }
- 
-   public boolean buscar(int n) {
-       return buscarAux(root, n);
-   }
-   
- 
-   private boolean buscarAux(Node node, int n) {
-       if (node.data == n) {
-           return true;
-       }
-       if (n > node.data) {
-           return buscarAux(node.right, n);
-       }
-       return buscarAux(node.left, n);
-   }
-
-
+    public BinarySearchTree() {  
+        root = null;  
+    } 
+  
+    public void insertar(int n) { 
+       root = insertarAux(root, n); 
+    } 
+      
+    public Node insertarAux(Node node, int n) { 
+  
+        if (node == null) { 
+            node = new Node(n); 
+            return node; 
+        } 
+  
+        if (n < node.data) 
+            node.left = insertarAux(node.left, n); 
+        else if (n > node.data) 
+            node.right = insertarAux(node.right, n); 
+  
+        return node; 
+    } 
+    
+    public void search(int n) {
+        searchAux(root, n);
+    }
+    
+    public boolean searchAux(Node node, int n) { 
+        if (node.data==n) 
+            return true; 
+        else if (node.data > n) {
+            if (node == null) return false;
+            searchAux(node.left, n); 
+        }
+        else {
+            if (node == null) return false;
+            searchAux(node.right, n); 
+        }
+        return false;
+    } 
+    
+    public void inOrder()  { 
+       inOrderAux(root); 
+    } 
+  
+    public void inOrderAux(Node node) { 
+        if (node != null) { 
+            inOrderAux(node.left); 
+            System.out.println(node.data); 
+            inOrderAux(node.right); 
+        } 
+    } 
 }
