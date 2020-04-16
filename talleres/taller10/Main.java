@@ -1,18 +1,16 @@
-package taller10;
+public class Main {
+    
+    public static void main(String[] args) { 
+        BinarySearchTree tree = new BinarySearchTree(); 
 
-class Main {
-	
-	public static void main(String[] args) {
-		
-		BinarySearchTree arbol = new BinarySearchTree(4);
-		arbol.insertar(2);
-		arbol.insertar(5);
-		arbol.insertar(7);
-		arbol.insertar(6);
-
-	    boolean bool = arbol.buscar(6);
-	    bool = arbol.buscar(6);
-	    System.out.println(bool);
-	    
-	  }
+        tree.insertar(50); 
+        tree.insertar(30); 
+        tree.insertar(20); 
+        tree.insertar(40); 
+        tree.insertar(70); 
+        tree.insertar(60); 
+        tree.insertar(80); 
+  
+        tree.inOrder(); 
+    } 
 }
