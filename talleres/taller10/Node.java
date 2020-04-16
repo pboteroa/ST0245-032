@@ -1,8 +1,6 @@
-package taller10;
-
 public class Node {
-	
-	public Node left,right;
+    
+    public Node left,right;
     public int data;
 
     public Node(int data) {
