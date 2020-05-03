@@ -10,7 +10,6 @@ public class DataRead {
         try {
             br = new BufferedReader(new FileReader("Vertices.txt"));
             String line;
-            int count = 0;
                     
             while((line = br.readLine()) != null) {
                 String[] arr = line.split(" ");
