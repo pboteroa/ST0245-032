@@ -1,18 +1,23 @@
 import os
 import csv
+import time
+import psutil
+from sklearn.metrics import confusion_matrix
 
 def create_df(file):
 
+    cont = 0
     with open(file, encoding = 'utf-8') as csv_file:
         lines = csv.reader(csv_file, delimiter = ';')
         df = []
         length = 0
         for line in lines:
-            if line[0] == "estu_consecutivo.1":
+            if line[0] == "estu_consecutivo.1" or line[0] == "":
                 labels = line
                 continue
             df.append(line)
             length += 1
+            cont += 1
 
     return df, length, labels
 
@@ -20,7 +25,7 @@ def labelling(df):
 
     counts = {}
 
-    for line in df[1:]:
+    for line in df[:]:
         target = line[-1]
         if target not in counts:
             counts[target] = 0
@@ -31,6 +36,45 @@ def labelling(df):
 def is_numeric(value):
 
     return isinstance(value, int) or isinstance(value, float)
+
+def is_number(value):
+    """ Determines wether a given value is numeric.
+    Input : a value
+    """
+    try:
+        float(value)
+        return True
+    except ValueError:
+        pass
+    try:
+        import unicodedata
+        unicodedata.numeric(value)
+        return True
+    except (TypeError, ValueError):
+        pass
+
+    return False
+
+def bestValue (df, columnNum):
+    """
+    Counts how many success cases there are according to a given value a column
+    can take, stores it into a dictionary, and returns the value that has the most success cases.
+    Input : the dataset organized into a matrix and the column number.
+    Output : best value for the column imput
+    """
+    dictionary = {}
+    for line in df:
+        data = line[columnNum]
+        if data not in dictionary:
+            dictionary [data] = 0
+        dictionary [data] += int(line[-1])
+    bestValue = None
+    bestSuccess = 0
+    for data in dictionary:
+        if (dictionary[data] >= bestSuccess):
+            bestSuccess = dictionary[data]
+            bestValue = data
+    return bestValue
 
 class Question_format:
 
@@ -44,7 +88,7 @@ class Question_format:
 
         val=row[self.column]
 
-        if isinstance(val, (str,float)):
+        if isinstance(val, (str,float)) or is_number(val):
             return val == self.value
         else:
             return val >= self.value
@@ -96,16 +140,13 @@ def best_option(df):
     global col_name
 
     for col in range(n_columns):
-        vals = set([line[col] for line in df])
-        for val in vals:
-            question = Question_format(col, val)
-            true_rows, false_rows = partition(df, question)
-            if len(true_rows) == 0 or len(false_rows) == 0:
-                continue
-            gain = information_gain(true_rows, false_rows, uncertainty)
+        val = bestValue(df, col)
+        question = Question_format(col, val)
+        true_rows, false_rows = partition(df, question)
+        gain = information_gain(true_rows, false_rows, uncertainty)
 
-            if gain >= maximum_gain:
-                maximum_gain, best_question, col_name = gain, question, labels[col]
+        if gain >= maximum_gain:
+            maximum_gain, best_question, col_name = gain, question, labels[col]
 
     return maximum_gain, best_question, col_name
 
@@ -118,7 +159,7 @@ class Leaf:
 
     def __init__(self, df):
 
-        self.prediction = prediction(df)
+        self.prediction = predict(df)
 
 class Decision_Node:
 
@@ -156,40 +197,22 @@ def print_tree(node, spacing = ""):
     print(spacing + "--> False")
     print_tree(node.false, spacing + " ")
 
-def prediction(df):
-
+def predict(df):
     counts = labelling(df)
 
     success = 0
-    fail = 0
+    fail = 1
 
-    for x, y in counts.items():
-        if x == 1:
-            success = y
-        else:
-            fail = y
+    if '1' in counts:
+        success = counts['1']
+
+    if '0' in counts:
+        fail = counts['0']
 
     total = success + fail
-    prediction = round((success / total), 2)
+    predict = round((success / total), 2)
 
-    return prediction
-
-'''
-class Tree:
-
-    def __init__(self, df, labels, depth):
-
-'''
-
-'''
-def treePNG(tree, labels):
-
-    dot_data = StringIO()
-    export_graphviz(tree, out_file=dot_data, filled=True, rounded=True, special_characters=True, feature_names = labels)
-    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-    graph.write_png('results.png')
-    Image(graph.create_png())
-'''
+    return predict
 
 def classify(line, node):
 
@@ -204,60 +227,30 @@ def classify(line, node):
     else:
         return classify(line, node.false)
 
-'''
-def classify(id, root, students):
-    node = root
-    data = students[id].data
-    while True:
-        try:
-            if data[node.column] >= node.divider:
-                if not node.right.leaf_node:
-                    node = node.right
-                else:
-                    return node.right.probability
-            else:
-                if not node.left.leaf_node:
-                    node = node.left
-                else:
-                    return node.left.probability
-        except:
-            try:
-                if data[node.column] == node.divider:
-                    if not node.right.leaf_node:
-                        node = node.right
-                    else:
-                        return node.right.probability
-                else:
-                    if not node.left.leaf_node:
-                        node = node.left
-                    else:
-                        return node.left.probability
-            except:
-                if data[node.column]:
-                    if not node.right.leaf_node:
-                        node = node.right
-                    else:
-                        return node.right.probability
-                else:
-                    if not node.left.leaf_node:
-                        node = node.left
-                    else:
-                        return node.left.probability
-'''
-
 if __name__ == "__main__":
-    train_file = os.path.expanduser('~\Documents\EAFIT\Segundo Semestre\Datos y Algoritmos 1\Proyecto\lite.csv')
-    test_file = os.path.expanduser('~\Documents\EAFIT\Segundo Semestre\Datos y Algoritmos 1\Proyecto\lite.csv')
+    #t1 = time.time()
+    train_file = os.path.expanduser('5_train_balanced_57765.csv')
+    test_file = os.path.expanduser('5_test_balanced_19255.csv')
     df, length, labels = create_df(train_file)
     df2, length2, labels2 = create_df(test_file)
-    tree = build_tree(df, 6)
+    #process = psutil.Process(os.getpid())
+    #print("Memory consumed in megabytes:", round((process.memory_info()[0] / 1000000), 2))
+    #t2 = time.time()
+    #time = (t2 - t1) * 1000
+    #print("Time in ms:", round(time, 2))
+    tree = build_tree(df, 9)
     correct = 0
     total = 0
+    success = []
+    prob = []
     for line in df2:
         prediction = classify(line, tree)
         actual = int(line[-1])
         if prediction == actual:
             correct += 1
         total += 1
+        success.append(prediction)
+        prob.append(actual)
     accuracy = correct / total * 100
     print(str(accuracy) + "%")
+    print(confusion_matrix(prob, success))
